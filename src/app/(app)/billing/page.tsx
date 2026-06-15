@@ -72,6 +72,7 @@ export default function BillingPage() {
   const pushNotification = useStore((s) => s.pushNotification);
 
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
 
   const statusColor =
     subscription.status === "active"
@@ -89,8 +90,7 @@ export default function BillingPage() {
     [subscription.tier],
   );
 
-  function switchTo(tier: PlanTier) {
-    if (tier === subscription.tier) return;
+  function mockSwitch(tier: PlanTier) {
     setTier(tier);
     updateSubscription({ renewsOn: isoDaysFromNow(30), status: "active" });
     pushNotification({
@@ -101,6 +101,37 @@ export default function BillingPage() {
           ? "You're now on the Free plan."
           : `Your ${cap(tier)} plan is active and renews in 30 days.`,
     });
+  }
+
+  async function switchTo(tier: PlanTier) {
+    if (tier === subscription.tier || loadingTier) return;
+
+    // The Free plan never goes through Stripe Checkout — keep the mock flow.
+    if (tier === "free") {
+      mockSwitch(tier);
+      return;
+    }
+
+    setLoadingTier(tier);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ tier }),
+      });
+      const data: { url?: string; demo?: boolean } = await res.json();
+      if (res.ok && data.url) {
+        window.location.assign(data.url);
+        return;
+      }
+      // Demo mode or any non-redirect response → existing mock behavior.
+      mockSwitch(tier);
+    } catch {
+      // Network/parse failure → fall back to the mock upgrade.
+      mockSwitch(tier);
+    } finally {
+      setLoadingTier(null);
+    }
   }
 
   function cancelPlan() {
@@ -219,10 +250,14 @@ export default function BillingPage() {
                 </ul>
                 <button
                   className={current ? "mt-6 w-full btn-ghost" : "mt-6 w-full btn-primary"}
-                  disabled={current}
+                  disabled={current || loadingTier !== null}
                   onClick={() => switchTo(p.tier)}
                 >
-                  {current ? "Your current plan" : `Switch to ${p.name}`}
+                  {current
+                    ? "Your current plan"
+                    : loadingTier === p.tier
+                      ? "Redirecting…"
+                      : `Switch to ${p.name}`}
                 </button>
               </Card>
             );
@@ -238,6 +273,9 @@ export default function BillingPage() {
           icon={<CreditCard size={18} />}
         />
         <div className="space-y-3">
+          <p className="text-xs text-text-muted">
+            Demo mode — connect Stripe keys to enable real checkout.
+          </p>
           <div className="flex items-center justify-between gap-3 rounded-xl bg-surface-muted px-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
               <span className="grid place-items-center h-10 w-10 rounded-xl bg-surface-card text-text-muted shrink-0">

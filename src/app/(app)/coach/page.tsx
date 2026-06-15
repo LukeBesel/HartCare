@@ -3,9 +3,10 @@
 import { PageHeader } from "@/components/ui";
 import { COACH_SUGGESTIONS } from "@/lib/coach";
 import { useTodayStats } from "@/lib/hooks";
-import { useCurrentProfile, useSettings } from "@/lib/store";
-import { cn } from "@/lib/utils";
-import { Bot, Loader2, SendHorizonal, Sparkles, User } from "lucide-react";
+import { renderMarkdown } from "@/lib/markdown";
+import { useCurrentProfile, useSettings, useStore } from "@/lib/store";
+import { cn, todayISO, uid } from "@/lib/utils";
+import { Bot, Check, Dumbbell, Loader2, SendHorizonal, Sparkles, User, Utensils } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface Msg {
@@ -13,29 +14,23 @@ interface Msg {
   content: string;
 }
 
-function renderMarkdown(text: string) {
-  // Lightweight markdown: bold, italics, headings, bullets.
-  return text.split("\n").map((line, i) => {
-    if (line.trim() === "") return <div key={i} className="h-2" />;
-    const formatted = line
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/_(.+?)_/g, "<em>$1</em>");
-    if (line.startsWith("- ")) {
-      return (
-        <div key={i} className="flex gap-2 pl-1">
-          <span className="text-brand-500 mt-0.5">•</span>
-          <span dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />
-        </div>
-      );
-    }
-    return <p key={i} dangerouslySetInnerHTML={{ __html: formatted }} />;
-  });
+type PlanKind = "workout" | "meal";
+
+/** Infer whether the user was asking for a workout or meal plan. */
+function detectPlanKind(userText: string | undefined): PlanKind | null {
+  if (!userText) return null;
+  const t = userText.toLowerCase();
+  if (/\b(meal|dinner|lunch|breakfast|eat|calorie|recipe|diet|nutrition)/.test(t)) return "meal";
+  if (/\b(workout|strength|exercise|train|gym|lift|plan)/.test(t)) return "workout";
+  return null;
 }
 
 export default function CoachPage() {
   const profile = useCurrentProfile();
   const settings = useSettings();
   const stats = useTodayStats();
+  const add = useStore((s) => s.add);
+  const pushNotification = useStore((s) => s.pushNotification);
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
@@ -44,11 +39,54 @@ export default function CoachPage() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  // Track which assistant messages have been applied, keyed by message index.
+  const [applied, setApplied] = useState<Record<number, boolean>>({});
+  // Index of the assistant message currently being revealed (typewriter), -1 = none.
+  const [revealIndex, setRevealIndex] = useState(-1);
+  const [revealLen, setRevealLen] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, revealLen]);
+
+  // Progressive reveal of the latest assistant message.
+  useEffect(() => {
+    if (revealIndex < 0) return;
+    const full = messages[revealIndex]?.content ?? "";
+    if (revealLen >= full.length) return;
+    const id = setTimeout(() => {
+      setRevealLen((n) => Math.min(full.length, n + Math.max(2, Math.ceil(full.length / 120))));
+    }, 16);
+    return () => clearTimeout(id);
+  }, [revealIndex, revealLen, messages]);
+
+  function applyPlan(index: number, kind: PlanKind) {
+    if (applied[index]) return;
+    if (kind === "workout") {
+      add("workouts", {
+        profileId: profile.id,
+        name: `Coach plan — ${todayISO()}`,
+        category: "general",
+        level: "beginner",
+        day: "Mon",
+        exercises: [
+          { id: uid("ex"), name: "Goblet Squat", muscle: "Legs", type: "strength", sets: 3, reps: 12, restSec: 60 },
+          { id: uid("ex"), name: "Dumbbell Bench Press", muscle: "Chest", type: "strength", sets: 4, reps: 10, restSec: 90 },
+          { id: uid("ex"), name: "Bent-over Row", muscle: "Back", type: "strength", sets: 4, reps: 10, restSec: 90 },
+          { id: uid("ex"), name: "Plank", muscle: "Core", type: "strength", sets: 3, reps: 45, restSec: 45 },
+        ],
+      });
+      pushNotification({ kind: "workout", title: "Added a workout from your coach" });
+    } else {
+      const date = todayISO();
+      add("mealPlans", { profileId: profile.id, date, meal: "breakfast", name: "Greek Yogurt & Berries", calories: 320, protein: 24, carbs: 38, fat: 8 });
+      add("mealPlans", { profileId: profile.id, date, meal: "lunch", name: "Grilled Chicken Bowl", calories: 540, protein: 42, carbs: 55, fat: 16 });
+      add("mealPlans", { profileId: profile.id, date, meal: "dinner", name: "Salmon with Quinoa & Greens", calories: 610, protein: 40, carbs: 48, fat: 26 });
+      pushNotification({ kind: "system", title: "Added meals from your coach" });
+    }
+    setApplied((prev) => ({ ...prev, [index]: true }));
+  }
 
   async function send(text: string) {
     const msg = text.trim();
@@ -73,9 +111,15 @@ export default function CoachPage() {
         }),
       });
       const data = await res.json();
-      setMessages([...next, { role: "assistant", content: data.reply ?? "Sorry, I couldn't respond just now." }]);
+      const reply = data.reply ?? "Sorry, I couldn't respond just now.";
+      const withReply = [...next, { role: "assistant" as const, content: reply }];
+      setMessages(withReply);
+      setRevealIndex(withReply.length - 1);
+      setRevealLen(0);
     } catch {
-      setMessages([...next, { role: "assistant", content: "I'm having trouble connecting. Please try again." }]);
+      const withReply = [...next, { role: "assistant" as const, content: "I'm having trouble connecting. Please try again." }];
+      setMessages(withReply);
+      setRevealIndex(-1);
     } finally {
       setLoading(false);
     }
@@ -90,28 +134,48 @@ export default function CoachPage() {
 
       <div className="card flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          {messages.map((m, i) => (
-            <div key={i} className={cn("flex gap-3", m.role === "user" && "flex-row-reverse")}>
-              <span
-                className={cn(
-                  "grid place-items-center h-9 w-9 rounded-xl shrink-0",
-                  m.role === "assistant" ? "bg-brand-600 text-white" : "bg-surface-muted text-text",
-                )}
-              >
-                {m.role === "assistant" ? <Bot size={18} /> : <User size={18} />}
-              </span>
-              <div
-                className={cn(
-                  "max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
-                  m.role === "assistant"
-                    ? "bg-surface-muted text-text rounded-tl-sm"
-                    : "bg-brand-600 text-white rounded-tr-sm",
-                )}
-              >
-                {m.role === "assistant" ? <div className="space-y-0.5">{renderMarkdown(m.content)}</div> : m.content}
+          {messages.map((m, i) => {
+            const revealing = m.role === "assistant" && i === revealIndex && revealLen < m.content.length;
+            const shown = revealing ? m.content.slice(0, revealLen) : m.content;
+            const planKind = m.role === "assistant" && !revealing ? detectPlanKind(messages[i - 1]?.content) : null;
+            return (
+              <div key={i} className={cn("flex gap-3", m.role === "user" && "flex-row-reverse")}>
+                <span
+                  className={cn(
+                    "grid place-items-center h-9 w-9 rounded-xl shrink-0",
+                    m.role === "assistant" ? "bg-brand-600 text-white" : "bg-surface-muted text-text",
+                  )}
+                >
+                  {m.role === "assistant" ? <Bot size={18} /> : <User size={18} />}
+                </span>
+                <div className="max-w-[80%] flex flex-col gap-2 items-start">
+                  <div
+                    className={cn(
+                      "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                      m.role === "assistant"
+                        ? "bg-surface-muted text-text rounded-tl-sm"
+                        : "bg-brand-600 text-white rounded-tr-sm",
+                    )}
+                  >
+                    {m.role === "assistant" ? <div className="space-y-0.5">{renderMarkdown(shown)}</div> : m.content}
+                  </div>
+                  {planKind &&
+                    (applied[i] ? (
+                      <span className="chip bg-mint-100 text-mint-700 dark:bg-mint-500/15 dark:text-mint-300">
+                        <Check size={12} /> Added
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => applyPlan(i, planKind)}
+                        className="chip bg-brand-50 text-brand-700 hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20 transition-colors"
+                      >
+                        {planKind === "workout" ? <Dumbbell size={12} /> : <Utensils size={12} />} Add to my plan
+                      </button>
+                    ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {loading && (
             <div className="flex gap-3">
               <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-600 text-white">

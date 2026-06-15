@@ -17,7 +17,28 @@ interface Body {
   context?: CoachContext;
 }
 
+// Simple in-memory fixed-window rate limiter (per client IP).
+const RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const rateLimits = new Map<string, { count: number; windowStart: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimits.get(ip);
+  if (!entry || now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    rateLimits.set(ip, { count: 1, windowStart: now });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
 export async function POST(req: Request) {
+  const ip = (req.headers.get("x-forwarded-for") ?? "local").split(",")[0].trim() || "local";
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: "Too many requests, please slow down." }, { status: 429 });
+  }
+
   let body: Body;
   try {
     body = (await req.json()) as Body;
