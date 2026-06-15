@@ -29,10 +29,10 @@ export default function Landing() {
       <header className="sticky top-0 z-30 backdrop-blur bg-surface/80 border-b border-border">
         <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-600 text-white">
-              <HeartPulse size={20} />
+            <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-gradient text-white glow-brand">
+              <HeartPulse size={20} strokeWidth={2.4} />
             </span>
-            <span className="font-bold text-lg">HartCare</span>
+            <span className="font-semibold tracking-tight text-lg">HartCare</span>
           </div>
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-text-muted">
             <a href="#features" className="hover:text-text">Features</a>
@@ -54,7 +54,7 @@ export default function Landing() {
           </span>
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.05]">
             Healthy living,
-            <span className="text-brand-600"> together.</span>
+            <span className="text-gradient-brand"> together.</span>
           </h1>
           <p className="mt-5 text-lg text-text-muted max-w-2xl mx-auto">
             One calm, beautiful place for your family&apos;s fitness, nutrition, sleep, medications,
@@ -90,7 +90,7 @@ export default function Landing() {
       </section>
 
       <section id="coach" className="max-w-6xl mx-auto px-5 py-16">
-        <div className="card card-pad lg:p-12 bg-gradient-to-br from-brand-600 to-brand-700 text-white">
+        <div className="card card-pad lg:p-12 bg-brand-gradient text-white">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div>
               <span className="chip bg-white/15 text-white mb-3"><Bot size={14} /> AI Health Coach</span>

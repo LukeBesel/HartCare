@@ -41,7 +41,7 @@ export default function SignupPage() {
       <div className="flex items-center justify-center p-6 order-2 lg:order-1">
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-2.5 mb-8">
-            <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-600 text-white"><HeartPulse size={20} /></span>
+            <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-gradient text-white glow-brand"><HeartPulse size={20} strokeWidth={2.4} /></span>
             <span className="font-bold text-lg">HartCare</span>
           </div>
           <h1 className="text-2xl font-bold">Create your household</h1>
@@ -83,7 +83,7 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-mint-600 to-brand-700 text-white order-1 lg:order-2">
+      <div className="hidden lg:flex flex-col justify-between p-12 bg-brand-gradient text-white order-1 lg:order-2">
         <div />
         <div>
           <h2 className="text-3xl font-bold leading-tight">A healthier home starts here.</h2>

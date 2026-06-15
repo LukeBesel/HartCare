@@ -32,7 +32,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-brand-600 to-brand-800 text-white">
+      <div className="hidden lg:flex flex-col justify-between p-12 bg-brand-gradient text-white">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="grid place-items-center h-9 w-9 rounded-xl bg-white/15"><HeartPulse size={20} /></span>
           <span className="font-bold text-lg">HartCare</span>
@@ -49,7 +49,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2.5 mb-8">
-            <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-600 text-white"><HeartPulse size={20} /></span>
+            <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-gradient text-white glow-brand"><HeartPulse size={20} strokeWidth={2.4} /></span>
             <span className="font-bold text-lg">HartCare</span>
           </div>
           <h1 className="text-2xl font-bold">Sign in</h1>
