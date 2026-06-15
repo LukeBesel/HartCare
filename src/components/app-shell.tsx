@@ -23,14 +23,18 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Avatar, Badge } from "./ui";
 import { useThemeToggle } from "./theme";
 
+const emptySubscribe = () => () => {};
+/** True only after client mount — avoids SSR/localStorage hydration mismatch. */
 function useMounted() {
-  const [m, setM] = useState(false);
-  useEffect(() => setM(true), []);
-  return m;
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 }
 
 function Brand() {
@@ -158,7 +162,7 @@ function NotificationsBell() {
           </div>
           <div className="max-h-96 overflow-auto">
             {notifications.length === 0 && (
-              <p className="px-4 py-8 text-center text-sm text-text-muted">You're all caught up 🎉</p>
+              <p className="px-4 py-8 text-center text-sm text-text-muted">You&apos;re all caught up 🎉</p>
             )}
             {notifications.map((n) => (
               <button

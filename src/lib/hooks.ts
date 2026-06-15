@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useCollection, useCurrentProfile, useStore } from "./store";
 import type { ArrayKeys, ItemOf } from "./store";
 import { isoDaysAgo, sum, todayISO } from "./utils";
@@ -19,9 +19,9 @@ export function useProfileRows<K extends ArrayKeys>(key: K): ItemOf<K>[] {
 }
 
 /** A {label,value} series from dated rows over the last `days` days. */
-export function useDailySeries(
-  rows: { date: string; [k: string]: unknown }[],
-  field: string,
+export function useDailySeries<T extends { date: string }>(
+  rows: T[],
+  field: keyof T & string,
   days = 14,
   agg: "sum" | "last" | "avg" = "last",
 ) {
@@ -99,8 +99,11 @@ export const MOTIVATION = [
 ];
 
 export function useDailyQuote() {
-  return useMemo(() => {
+  // Intentionally derived from the current date once per mount so the quote is
+  // stable for the whole day; the date read is the point of the hook.
+  const [quote] = useState(() => {
     const day = Math.floor(Date.now() / 86400000);
     return MOTIVATION[day % MOTIVATION.length];
-  }, []);
+  });
+  return quote;
 }

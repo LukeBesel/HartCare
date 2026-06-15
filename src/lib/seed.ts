@@ -18,10 +18,12 @@ import type {
   PetVaccination,
   PetWeight,
   Profile,
+  ProgressPhoto,
   Recipe,
   Settings,
   SleepLog,
   Subscription,
+  Vital,
   WaterLog,
   Weight,
   Workout,
@@ -34,6 +36,7 @@ export interface DB {
   healthProfiles: HealthProfile[];
   weights: Weight[];
   measurements: Measurement[];
+  vitals: Vital[];
   goals: Goal[];
   workouts: Workout[];
   workoutSessions: WorkoutSession[];
@@ -53,6 +56,7 @@ export interface DB {
   petVaccinations: PetVaccination[];
   petFeeding: PetFeeding[];
   notifications: AppNotification[];
+  progressPhotos: ProgressPhoto[];
   subscription: Subscription;
   settings: Settings;
 }
@@ -105,6 +109,26 @@ export function buildSeed(): DB {
     { id: uid("m"), profileId: P_DAD, date: todayISO(), part: "Waist", inches: 34.5 },
     { id: uid("m"), profileId: P_DAD, date: isoDaysAgo(30), part: "Chest", inches: 42 },
     { id: uid("m"), profileId: P_DAD, date: todayISO(), part: "Chest", inches: 43 },
+  ];
+
+  const vitals: Vital[] = [
+    ...series(30, (i) => 122 - Math.round(Math.sin(i / 6) * 4)).map((d) => ({
+      id: uid("v"), profileId: P_DAD, date: d.date, type: "blood_pressure" as const,
+      value: d.value, value2: 78 - Math.round(Math.sin(d.value / 30) * 3), unit: "mmHg",
+    })),
+    ...series(30, (i) => 58 + (i % 5)).map((d) => ({
+      id: uid("v"), profileId: P_DAD, date: d.date, type: "heart_rate" as const, value: d.value, unit: "bpm",
+    })),
+    ...series(14, (i) => 95 + (i % 7) * 2).map((d) => ({
+      id: uid("v"), profileId: P_DAD, date: d.date, type: "blood_sugar" as const, value: d.value, unit: "mg/dL",
+    })),
+    ...series(30, () => 128).map((d) => ({
+      id: uid("v"), profileId: P_GRAN, date: d.date, type: "blood_pressure" as const, value: 134, value2: 84, unit: "mmHg",
+    })),
+    { id: uid("v"), profileId: P_DAD, date: isoDaysAgo(20), type: "cholesterol", value: 182, unit: "mg/dL", label: "Total" },
+    { id: uid("v"), profileId: P_DAD, date: isoDaysAgo(20), type: "lab", value: 104, unit: "mg/dL", label: "LDL" },
+    { id: uid("v"), profileId: P_DAD, date: isoDaysAgo(20), type: "lab", value: 58, unit: "mg/dL", label: "HDL" },
+    { id: uid("v"), profileId: P_GRAN, date: isoDaysAgo(15), type: "cholesterol", value: 205, unit: "mg/dL", label: "Total" },
   ];
 
   const goals: Goal[] = [
@@ -268,10 +292,10 @@ export function buildSeed(): DB {
   };
 
   return {
-    households, profiles, healthProfiles, weights, measurements, goals, workouts,
+    households, profiles, healthProfiles, weights, measurements, vitals, goals, workouts,
     workoutSessions, recipes, mealPlans, groceryItems, waterLogs, sleepLogs,
     medications, appointments, allergies, conditions, moods, habits, pets,
-    petWeights, petVaccinations, petFeeding, notifications, subscription, settings,
+    petWeights, petVaccinations, petFeeding, notifications, progressPhotos: [], subscription, settings,
   };
 }
 

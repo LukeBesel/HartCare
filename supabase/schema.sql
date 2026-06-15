@@ -82,6 +82,13 @@ create table if not exists measurements (
   date date not null, part text not null, inches numeric not null
 );
 
+create table if not exists vitals (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references profiles (id) on delete cascade,
+  date date not null, type text not null,
+  value numeric not null, value2 numeric, unit text, label text, note text
+);
+
 create table if not exists goals (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references profiles (id) on delete cascade,
@@ -247,7 +254,7 @@ create table if not exists settings (
 do $$
 declare t text;
   profile_tables text[] := array[
-    'health_profiles','weights','measurements','goals','workouts','workout_sessions',
+    'health_profiles','weights','measurements','vitals','goals','workouts','workout_sessions',
     'meal_plans','water_logs','sleep_logs','medications','appointments','allergies',
     'conditions','moods','habits','progress_photos','settings'
   ];

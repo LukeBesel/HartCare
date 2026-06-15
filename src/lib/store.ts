@@ -8,7 +8,7 @@ import type { AppNotification, PlanTier, Settings, Subscription } from "./types"
 
 /** Collections that are arrays of records with an `id`. */
 type ArrayKeys = {
-  [K in keyof DB]: DB[K] extends Array<infer _U> ? K : never;
+  [K in keyof DB]: DB[K] extends Array<unknown> ? K : never;
 }[keyof DB];
 
 type ItemOf<K extends ArrayKeys> = DB[K] extends Array<infer U> ? U : never;
@@ -37,7 +37,7 @@ interface StoreState {
 
 export const useStore = create<StoreState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       db: buildSeed(),
       currentProfileId: SEED_IDS.P_DAD,
       hydrated: false,

@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description:
     "A premium health, wellness, fitness, nutrition and care platform for individuals and families.",
   applicationName: "HartCare",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg" },
 };
 
 export const viewport: Viewport = {

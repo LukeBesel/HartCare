@@ -203,6 +203,26 @@ export interface Condition {
   notes?: string;
 }
 
+/** Generic clinical reading: blood pressure, heart rate, glucose, labs, etc. */
+export interface Vital {
+  id: string;
+  profileId: string;
+  date: string;
+  type:
+    | "blood_pressure"
+    | "heart_rate"
+    | "blood_sugar"
+    | "cholesterol"
+    | "temperature"
+    | "oxygen"
+    | "lab";
+  value: number; // primary value (e.g. systolic, bpm, mg/dL)
+  value2?: number; // optional secondary (e.g. diastolic)
+  unit: string;
+  label?: string; // for labs, e.g. "LDL", "HbA1c"
+  note?: string;
+}
+
 export interface Mood {
   id: string;
   profileId: string;
