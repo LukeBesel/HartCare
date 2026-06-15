@@ -40,11 +40,11 @@ function useMounted() {
 function Brand() {
   return (
     <Link href="/dashboard" className="flex items-center gap-2.5 px-2 py-1">
-      <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-600 text-white shadow-sm">
-        <HeartPulse size={20} />
+      <span className="grid place-items-center h-9 w-9 rounded-xl bg-brand-gradient text-white shadow-sm glow-brand">
+        <HeartPulse size={20} strokeWidth={2.4} />
       </span>
       <div className="leading-tight">
-        <div className="font-bold text-text">HartCare</div>
+        <div className="font-semibold tracking-tight text-text">HartCare</div>
         <div className="text-[11px] text-text-muted">Healthy living, together.</div>
       </div>
     </Link>

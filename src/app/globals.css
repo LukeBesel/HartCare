@@ -9,19 +9,29 @@
   Palette: warm white, soft blue, charcoal, subtle green accents.
 */
 @theme {
-  /* Soft blue brand */
-  --color-brand-50: #eef5ff;
-  --color-brand-100: #d9e8ff;
-  --color-brand-200: #bcd6ff;
-  --color-brand-300: #8ebcff;
-  --color-brand-400: #5b97fb;
-  --color-brand-500: #3b76f0;
-  --color-brand-600: #2a59d6;
-  --color-brand-700: #2347ad;
-  --color-brand-800: #213d8a;
-  --color-brand-900: #21386e;
+  /* Brand — indigo, matching the HartMonitor family (#6366f1 primary). */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
 
-  /* Subtle green accent */
+  /* Accent — the signature HartMonitor pink (gradient partner to brand). */
+  --color-accent-50: #fdf2f8;
+  --color-accent-100: #fce7f3;
+  --color-accent-200: #fbcfe8;
+  --color-accent-300: #f9a8d4;
+  --color-accent-400: #f472b6;
+  --color-accent-500: #ec4899;
+  --color-accent-600: #db2777;
+  --color-accent-700: #be185d;
+
+  /* Subtle green accent (success / health) */
   --color-mint-50: #edfdf5;
   --color-mint-100: #d3f8e5;
   --color-mint-200: #aaefce;
@@ -33,39 +43,43 @@
   --color-mint-800: #0c5840;
   --color-mint-900: #0b4836;
 
-  /* Warm charcoal neutrals */
-  --color-ink-50: #f7f7f6;
-  --color-ink-100: #eeedeb;
-  --color-ink-200: #dcdad6;
-  --color-ink-300: #c0bdb6;
-  --color-ink-400: #9c988f;
-  --color-ink-500: #7c7870;
-  --color-ink-600: #635f59;
-  --color-ink-700: #4f4c47;
-  --color-ink-800: #36342f;
-  --color-ink-900: #21201d;
-  --color-ink-950: #161512;
+  /* Cool slate neutrals (matches HartMonitor) */
+  --color-ink-50: #f8fafc;
+  --color-ink-100: #f1f5f9;
+  --color-ink-200: #e2e8f0;
+  --color-ink-300: #cbd5e1;
+  --color-ink-400: #94a3b8;
+  --color-ink-500: #64748b;
+  --color-ink-600: #475569;
+  --color-ink-700: #334155;
+  --color-ink-800: #1e293b;
+  --color-ink-900: #0f172a;
+  --color-ink-950: #020617;
 
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+
+  /* Signature brand gradient (indigo → pink), used for the mark, hero & CTAs. */
+  --brand-gradient: linear-gradient(135deg, #6366f1, #ec4899);
 }
 
 /* Semantic surface tokens, swapped in dark mode */
 :root {
-  --surface: #fbfaf8; /* warm white */
+  --brand-gradient: linear-gradient(135deg, #6366f1, #ec4899);
+  --surface: #f8fafc; /* slate-50 */
   --surface-card: #ffffff;
-  --surface-muted: #f3f2ef;
-  --border-c: #e7e5e0;
-  --text-c: #21201d;
-  --text-muted-c: #635f59;
+  --surface-muted: #f1f5f9; /* slate-100 */
+  --border-c: #e2e8f0; /* slate-200 */
+  --text-c: #0f172a; /* slate-900 */
+  --text-muted-c: #64748b; /* slate-500 */
 }
 
 .dark {
-  --surface: #131210;
-  --surface-card: #1c1b18;
-  --surface-muted: #232220;
-  --border-c: #312f2b;
-  --text-c: #f3f2ef;
-  --text-muted-c: #a8a49b;
+  --surface: #0f172a; /* slate-900 */
+  --surface-card: #1e293b; /* slate-800 */
+  --surface-muted: #273449;
+  --border-c: #334155; /* slate-700 */
+  --text-c: #f1f5f9; /* slate-100 */
+  --text-muted-c: #94a3b8; /* slate-400 */
 }
 
 @theme inline {
@@ -141,6 +155,28 @@ body {
 }
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ── Brand signature (matches HartMonitor): gradient + accent glow ── */
+.bg-brand-gradient {
+  background-image: var(--brand-gradient);
+}
+.text-gradient-brand {
+  background-image: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.glow-brand {
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25), 0 0 40px -6px rgba(236, 72, 153, 0.45);
+}
+/* Subtle accent halo on primary CTAs — the family's signature glow. */
+.btn-primary {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 22px -6px rgba(99, 102, 241, 0.5);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), 0 0 30px -4px rgba(236, 72, 153, 0.5);
 }
 
 @keyframes fade-in-up {

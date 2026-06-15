@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <div className="min-h-screen grid place-items-center bg-surface text-text p-6">
       <div className="text-center">
-        <span className="mx-auto mb-4 grid place-items-center h-14 w-14 rounded-2xl bg-brand-600 text-white">
+        <span className="mx-auto mb-4 grid place-items-center h-14 w-14 rounded-2xl bg-brand-gradient text-white glow-brand">
           <HeartPulse size={28} />
         </span>
         <h1 className="text-3xl font-bold">Page not found</h1>
