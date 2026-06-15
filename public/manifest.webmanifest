@@ -1,0 +1,12 @@
+{
+  "name": "HartCare — Healthy living, together.",
+  "short_name": "HartCare",
+  "description": "A premium health, wellness, fitness, nutrition and care platform for individuals and families.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#fbfaf8",
+  "theme_color": "#2a59d6",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

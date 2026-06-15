@@ -1,0 +1,33 @@
+# ─── Render.com blueprint ─────────────────────────────────────────────────────
+# Deploy HartCare on Render using the Dockerfile. Import this repo as a
+# "Blueprint" in the Render dashboard, or use it as a reference.
+#
+# HartCare needs no configuration to run (local-first demo mode). Add the
+# Supabase + Anthropic env vars to enable auth, realtime sync and the live AI
+# coach.
+
+services:
+  - type: web
+    name: hartcare
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      # Public Supabase keys (safe to expose to the browser). Add in the
+      # dashboard when you go live.
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      # Optional — powers the AI coach with Claude. Without it the coach uses
+      # the built-in offline engine.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: COACH_MODEL
+        sync: false
