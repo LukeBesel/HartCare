@@ -1,5 +1,5 @@
 import { isoDaysAgo, isoDaysFromNow, todayISO, uid } from "./utils";
-import { DEFAULT_DASHBOARD } from "./types";
+import { DEFAULT_DASHBOARD, DEFAULT_WALLPAPER } from "./types";
 import type {
   Allergy,
   AppNotification,
@@ -297,6 +297,10 @@ export function buildSeed(): DB {
     glow: true,
     reduceMotion: false,
     surface: "clean",
+    wallpaper: { ...DEFAULT_WALLPAPER },
+    presets: [],
+    themePerProfile: false,
+    profileAppearance: {},
     dashboard: DEFAULT_DASHBOARD.map((w) => ({ ...w })),
   };
 

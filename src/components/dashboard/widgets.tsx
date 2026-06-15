@@ -41,6 +41,18 @@ import { useMemo, type ReactNode } from "react";
 
 const MOOD_EMOJI = ["😞", "😕", "😐", "🙂", "😄"];
 
+type WidgetOptions = Record<string, string | number | boolean>;
+
+/** Read an option value with a fallback default. */
+function opt<T extends string | number | boolean>(
+  options: WidgetOptions | undefined,
+  key: string,
+  fallback: T,
+): T {
+  const v = options?.[key];
+  return v === undefined ? fallback : (v as T);
+}
+
 /* ------------------------------ Ring helper ------------------------------ */
 function RingStat({
   ring,
@@ -97,11 +109,13 @@ export function RingsWidget() {
 }
 
 /* ------------------------------- water ----------------------------------- */
-export function WaterWidget() {
+export function WaterWidget({ options }: { options?: WidgetOptions }) {
   const profile = useCurrentProfile();
   const stats = useTodayStats();
   const add = useStore((s) => s.add);
-  const waterPct = Math.round((stats.waterToday / stats.waterGoal) * 100);
+  const goalOverride = opt(options, "goalOverride", 0);
+  const goal = goalOverride > 0 ? goalOverride : stats.waterGoal;
+  const waterPct = Math.round((stats.waterToday / goal) * 100);
   function addWater(oz: number) {
     add("waterLogs", { profileId: profile.id, date: todayISO(), oz });
   }
@@ -109,7 +123,7 @@ export function WaterWidget() {
     <CardPad>
       <SectionTitle title="Water intake" icon={<Droplets size={18} />} />
       <div className="flex items-center gap-4">
-        <ProgressRing value={waterPct} color="#38bdf8" label={`${stats.waterToday}`} sublabel={`/ ${stats.waterGoal} oz`} />
+        <ProgressRing value={waterPct} color="#38bdf8" label={`${stats.waterToday}`} sublabel={`/ ${goal} oz`} />
         <div className="flex-1 space-y-2">
           {[8, 16, 24].map((oz) => (
             <button key={oz} onClick={() => addWater(oz)} className="btn-outline w-full justify-start py-2">
@@ -156,11 +170,12 @@ export function WorkoutWidget() {
 }
 
 /* ------------------------------- meals ----------------------------------- */
-export function MealsWidget() {
+export function MealsWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const meals = useProfileRows("mealPlans");
   const t = todayISO();
   const todaysMeals = useMemo(() => meals.filter((m) => m.date === t), [meals, t]);
+  const showMacros = opt(options, "showMacros", true);
   return (
     <CardPad>
       <SectionTitle
@@ -180,10 +195,12 @@ export function MealsWidget() {
           </div>
         ))}
       </div>
-      <div className="mt-3 flex items-center justify-between text-sm">
-        <span className="text-text-muted">Protein today</span>
-        <span className="font-medium">{stats.proteinToday} g</span>
-      </div>
+      {showMacros && (
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <span className="text-text-muted">Protein today</span>
+          <span className="font-medium">{stats.proteinToday} g</span>
+        </div>
+      )}
     </CardPad>
   );
 }
@@ -229,16 +246,17 @@ export function MacrosWidget() {
 }
 
 /* ------------------------------- weight ---------------------------------- */
-export function WeightWidget() {
+export function WeightWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const weights = useProfileRows("weights");
+  const range = Number(opt(options, "range", "30"));
   const weightSeries = useMemo(
     () =>
       [...weights]
         .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(-21)
+        .slice(-range)
         .map((w) => ({ label: w.date.slice(5), value: w.lbs })),
-    [weights],
+    [weights, range],
   );
   return (
     <CardPad>
@@ -262,15 +280,19 @@ export function WeightWidget() {
 }
 
 /* -------------------------------- steps ---------------------------------- */
-export function StepsWidget() {
+export function StepsWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const stepPct = Math.round((stats.steps / stats.stepGoal) * 100);
-  // Steps are synthetic for the demo; derive a stable 7-day series from today's value.
+  const range = Number(opt(options, "range", "30"));
+  // Steps are synthetic for the demo; derive a stable N-day series from today's value.
   const series = useMemo(() => {
     const factors = [0.82, 1.1, 0.94, 1.18, 0.76, 1.04, 1.0];
     const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-    return factors.map((f, i) => ({ label: days[i], value: Math.round(stats.steps * f) }));
-  }, [stats.steps]);
+    return Array.from({ length: range }, (_, i) => ({
+      label: days[i % days.length],
+      value: Math.round(stats.steps * factors[i % factors.length]),
+    }));
+  }, [stats.steps, range]);
   return (
     <CardPad>
       <SectionTitle
@@ -289,10 +311,11 @@ export function StepsWidget() {
 }
 
 /* -------------------------------- sleep ---------------------------------- */
-export function SleepWidget() {
+export function SleepWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const sleepLogs = useProfileRows("sleepLogs");
-  const series = useDailySeries(sleepLogs, "hours", 7, "last");
+  const range = Number(opt(options, "range", "30"));
+  const series = useDailySeries(sleepLogs, "hours", range, "last");
   const sleepHrs = stats.sleepLast?.hours ?? 0;
   return (
     <CardPad>
@@ -308,10 +331,11 @@ export function SleepWidget() {
 }
 
 /* --------------------------------- mood ---------------------------------- */
-export function MoodWidget() {
+export function MoodWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const moods = useProfileRows("moods");
-  const series = useDailySeries(moods, "mood", 14, "last");
+  const range = Number(opt(options, "range", "30"));
+  const series = useDailySeries(moods, "mood", range, "last");
   const last = stats.moodLast;
   const emoji = last ? MOOD_EMOJI[Math.max(0, Math.min(4, Math.round(last.mood) - 1))] : "🙂";
   return (
@@ -380,9 +404,10 @@ export function AppointmentsWidget() {
 }
 
 /* --------------------------------- goals --------------------------------- */
-export function GoalsWidget() {
+export function GoalsWidget({ options }: { options?: WidgetOptions }) {
   const goals = useProfileRows("goals");
-  const topGoals = useMemo(() => goals.slice(0, 4), [goals]);
+  const limit = opt(options, "limit", 3);
+  const topGoals = useMemo(() => goals.slice(0, limit), [goals, limit]);
   return (
     <CardPad>
       <SectionTitle title="Goals" icon={<Target size={18} />} action={<Link href="/health" className="text-sm text-brand-600 hover:underline">All</Link>} />

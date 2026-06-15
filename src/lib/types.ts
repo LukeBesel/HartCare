@@ -359,6 +359,52 @@ export interface WidgetConfig {
   enabled: boolean;
   /** Column span on the dashboard grid (1–3). */
   w: 1 | 2 | 3;
+  /** Per-widget options (e.g. chart range, custom goal). */
+  options?: Record<string, string | number | boolean>;
+}
+
+export type WallpaperPresetId =
+  | "aurora"
+  | "mesh"
+  | "dawn"
+  | "dusk"
+  | "ocean"
+  | "forest"
+  | "mono"
+  | "grid";
+
+export interface Wallpaper {
+  mode: "none" | "preset" | "image" | "slideshow";
+  preset?: WallpaperPresetId;
+  /** Image sources (data URLs or storage URLs) for image / slideshow modes. */
+  images: string[];
+  /** Seconds between slides in slideshow mode. */
+  intervalSec: number;
+  /** Backdrop blur (px) applied to the wallpaper for readability. */
+  blur: number;
+  /** Dim overlay opacity 0–80 (%). */
+  dim: number;
+  fit: "cover" | "contain";
+}
+
+/** A complete, portable appearance — the unit saved in presets & share codes. */
+export interface Appearance {
+  theme: ThemeMode;
+  accent: AccentName;
+  customAccent?: string;
+  scale: UIScale;
+  radius: RadiusStyle;
+  font: FontChoice;
+  glow: boolean;
+  reduceMotion: boolean;
+  surface: SurfaceStyle;
+  wallpaper: Wallpaper;
+}
+
+export interface ThemePreset {
+  id: string;
+  name: string;
+  appearance: Appearance;
 }
 
 export interface Settings {
@@ -369,7 +415,7 @@ export interface Settings {
   stepGoal: number;
   sleepGoalHours: number;
 
-  // Appearance / customization
+  // Appearance / customization (the household-wide default appearance)
   accent: AccentName;
   customAccent?: string; // hex, used when accent === "custom"
   scale: UIScale;
@@ -378,10 +424,28 @@ export interface Settings {
   glow: boolean;
   reduceMotion: boolean;
   surface: SurfaceStyle;
+  wallpaper: Wallpaper;
 
-  // Dashboard widget layout (order + visibility + width)
+  // Saveable / shareable theme presets
+  presets: ThemePreset[];
+
+  // Per-profile theming: when on, each profile can have its own Appearance
+  themePerProfile: boolean;
+  profileAppearance: Record<string, Appearance>;
+
+  // Dashboard widget layout (order + visibility + width + options)
   dashboard: WidgetConfig[];
 }
+
+export const DEFAULT_WALLPAPER: Wallpaper = {
+  mode: "none",
+  preset: "aurora",
+  images: [],
+  intervalSec: 30,
+  blur: 0,
+  dim: 30,
+  fit: "cover",
+};
 
 export const DEFAULT_DASHBOARD: WidgetConfig[] = [
   { id: "rings", enabled: true, w: 3 },

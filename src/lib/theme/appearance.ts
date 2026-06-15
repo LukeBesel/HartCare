@@ -1,4 +1,4 @@
-import type { FontChoice, RadiusStyle, Settings, UIScale } from "@/lib/types";
+import type { Appearance, FontChoice, RadiusStyle, UIScale } from "@/lib/types";
 import { accentCssVars, resolveAccent } from "./accents";
 
 /** Root font-size per density — Tailwind's rem spacing scales the whole UI. */
@@ -44,7 +44,7 @@ export const FONT_OPTIONS: { value: FontChoice; label: string }[] = [
 ];
 
 /** Computes every CSS variable for the appearance (accent + radius + font). */
-export function appearanceVars(s: Pick<Settings, "accent" | "customAccent" | "radius" | "font">) {
+export function appearanceVars(s: Pick<Appearance, "accent" | "customAccent" | "radius" | "font">) {
   const vars: Record<string, string> = {
     ...accentCssVars(resolveAccent(s.accent, s.customAccent)),
     "--app-font": FONT_STACK[s.font] ?? FONT_STACK.sans,
@@ -57,7 +57,7 @@ export function appearanceVars(s: Pick<Settings, "accent" | "customAccent" | "ra
 }
 
 /** Applies the full appearance to <html> at runtime. */
-export function applyAppearance(root: HTMLElement, s: Settings) {
+export function applyAppearance(root: HTMLElement, s: Appearance) {
   const vars = appearanceVars(s);
   for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
   root.style.fontSize = SCALE_PX[s.scale] ?? SCALE_PX.cozy;
