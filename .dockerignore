@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+.next
+.git
+.env
+.env.local
+**/.env*
+npm-debug.log*
+.DS_Store
+/tmp
+README.md
+LAUNCH.md
+HOSTING.md
