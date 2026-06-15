@@ -103,6 +103,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* When a wallpaper is active, let it show through behind the app. */
+html.has-wallpaper body {
+  background: transparent;
+}
+
 /* Accent-tinted surfaces (optional appearance) */
 html[data-surface="tinted"] {
   --surface: color-mix(in srgb, var(--color-brand-500) 5%, #f8fafc);

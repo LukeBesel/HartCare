@@ -69,3 +69,24 @@ export async function uploadProgressPhoto(file: File): Promise<string> {
   }
   return compressImage(file);
 }
+
+/**
+ * Persist a wallpaper image. Uploads to the public `wallpapers` Storage bucket
+ * when Supabase is configured (returning the public URL); otherwise returns a
+ * larger compressed JPEG data URL suitable for a full-screen background.
+ */
+export async function uploadWallpaper(file: File): Promise<string> {
+  if (SUPABASE_ENABLED) {
+    try {
+      const supabase = createClient();
+      const path = `${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("wallpapers").upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("wallpapers").getPublicUrl(path);
+      return data.publicUrl;
+    } catch {
+      return compressImage(file, 1600, 0.78);
+    }
+  }
+  return compressImage(file, 1600, 0.78);
+}
