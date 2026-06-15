@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { createClient, SUPABASE_ENABLED } from "@/lib/supabase/client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Avatar, Badge } from "./ui";
@@ -320,7 +321,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <ThemeToggle />
           <NotificationsBell />
           <button
-            onClick={() => router.push("/")}
+            onClick={async () => {
+              if (SUPABASE_ENABLED) {
+                try {
+                  await createClient().auth.signOut();
+                } catch {
+                  /* ignore */
+                }
+              }
+              router.push("/login");
+            }}
             title="Sign out"
             className="hidden sm:grid place-items-center h-9 w-9 rounded-xl hover:bg-surface-muted text-text-muted hover:text-text"
           >

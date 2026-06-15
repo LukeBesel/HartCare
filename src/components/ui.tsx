@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 
 /* ------------------------------- Card ------------------------------------ */
 export function Card({
@@ -266,6 +266,10 @@ export function Modal({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -274,14 +278,68 @@ export function Modal({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Focus management: move focus into the dialog on open, restore it on close,
+  // and trap Tab/Shift+Tab within the dialog. Refs only — no setState here.
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    closeBtnRef.current?.focus();
+
+    function focusables(): HTMLElement[] {
+      const node = dialogRef.current;
+      if (!node) return [];
+      return Array.from(
+        node.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Tab") return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey) {
+        if (active === first || !dialogRef.current?.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    const node = dialogRef.current;
+    node?.addEventListener("keydown", onKeyDown);
+    return () => {
+      node?.removeEventListener("keydown", onKeyDown);
+      previouslyFocused?.focus?.();
+    };
+  }, [open]);
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative card w-full max-w-lg max-h-[90vh] overflow-auto animate-in">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative card w-full max-w-lg max-h-[90vh] overflow-auto animate-in"
+      >
         <div className="flex items-center justify-between border-b border-border px-5 py-4 sticky top-0 bg-surface-card rounded-t-2xl">
-          <h3 className="font-semibold text-text">{title}</h3>
-          <button onClick={onClose} className="text-text-muted hover:text-text rounded-lg p-1">
+          <h3 id={titleId} className="font-semibold text-text">{title}</h3>
+          <button
+            ref={closeBtnRef}
+            onClick={onClose}
+            className="text-text-muted hover:text-text rounded-lg p-1"
+            aria-label="Close dialog"
+          >
             <X size={18} />
           </button>
         </div>

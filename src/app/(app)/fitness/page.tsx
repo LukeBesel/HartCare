@@ -11,6 +11,7 @@ import {
   StatCard,
 } from "@/components/ui";
 import { useProfileRows } from "@/lib/hooks";
+import { uploadProgressPhoto } from "@/lib/images";
 import { useCurrentProfile, useStore } from "@/lib/store";
 import type { Exercise, Workout } from "@/lib/types";
 import { relativeDay, round, todayISO, uid } from "@/lib/utils";
@@ -176,16 +177,13 @@ export default function FitnessPage() {
     });
   }
 
-  function addPhotoFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      add("progressPhotos", {
-        profileId: profile.id,
-        date: todayISO(),
-        dataUrl: String(reader.result),
-      });
-    };
-    reader.readAsDataURL(file);
+  async function addPhotoFile(file: File) {
+    const dataUrl = await uploadProgressPhoto(file);
+    add("progressPhotos", {
+      profileId: profile.id,
+      date: todayISO(),
+      dataUrl,
+    });
   }
 
   return (
@@ -406,7 +404,7 @@ export default function FitnessPage() {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) addPhotoFile(file);
+                if (file) void addPhotoFile(file);
                 e.target.value = "";
               }}
             />
