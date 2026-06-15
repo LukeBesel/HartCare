@@ -10,27 +10,13 @@ import {
   Segmented,
   Toggle,
 } from "@/components/ui";
+import { AppearanceStudio } from "@/components/appearance/AppearanceStudio";
 import { useCurrentProfile, useSettings, useStore } from "@/lib/store";
-import {
-  Bell,
-  Monitor,
-  Moon as MoonIcon,
-  Ruler,
-  Shield,
-  Sun,
-  Trash2,
-  User,
-} from "lucide-react";
+import { Bell, Monitor, Ruler, Shield, Trash2, User } from "lucide-react";
 import { useState } from "react";
 
 const AVATAR_OPTIONS = ["🧔", "👩", "🧒", "👵", "👨", "👧", "🧑", "👴", "🐱", "🐶"];
 const COLOR_OPTIONS = ["#2a59d6", "#15ad76", "#f59e0b", "#a855f7", "#f43f5e", "#38bdf8"];
-
-const THEME_OPTIONS: { label: string; value: "light" | "dark" | "system" }[] = [
-  { label: "Light", value: "light" },
-  { label: "Dark", value: "dark" },
-  { label: "System", value: "system" },
-];
 
 const UNIT_OPTIONS: { label: string; value: "imperial" | "metric" }[] = [
   { label: "Imperial", value: "imperial" },
@@ -133,36 +119,26 @@ export default function SettingsPage() {
         </div>
       </CardPad>
 
-      {/* Appearance */}
+      {/* Appearance Studio */}
+      <AppearanceStudio />
+
+      {/* Units */}
       <CardPad>
         <SectionTitle
-          title="Appearance"
-          subtitle="Theme and measurement units"
-          icon={<Sun size={18} />}
+          title="Units"
+          subtitle="Measurement system"
+          icon={<Ruler size={18} />}
         />
-        <div className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-text">
-              <MoonIcon size={16} className="text-text-muted" />
-              <span className="font-medium">Theme</span>
-            </div>
-            <Segmented
-              options={THEME_OPTIONS}
-              value={settings.theme}
-              onChange={(theme) => updateSettings({ theme })}
-            />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-text">
+            <Ruler size={16} className="text-text-muted" />
+            <span className="font-medium">Measurement units</span>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-text">
-              <Ruler size={16} className="text-text-muted" />
-              <span className="font-medium">Units</span>
-            </div>
-            <Segmented
-              options={UNIT_OPTIONS}
-              value={settings.units}
-              onChange={(units) => updateSettings({ units })}
-            />
-          </div>
+          <Segmented
+            options={UNIT_OPTIONS}
+            value={settings.units}
+            onChange={(units) => updateSettings({ units })}
+          />
         </div>
       </CardPad>
 

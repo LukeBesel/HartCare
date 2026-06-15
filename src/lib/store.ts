@@ -146,6 +146,19 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: "hartcare-store-v1",
+      version: 2,
+      // Backfill appearance/customization defaults for stores saved before v2.
+      migrate: (persisted: unknown) => {
+        const p = persisted as { db?: DB; currentProfileId?: string } | undefined;
+        if (p?.db?.settings) {
+          const fresh = buildSeed().settings;
+          p.db.settings = { ...fresh, ...p.db.settings };
+          if (!Array.isArray(p.db.settings.dashboard) || p.db.settings.dashboard.length === 0) {
+            p.db.settings.dashboard = fresh.dashboard;
+          }
+        }
+        return p as unknown;
+      },
       onRehydrateStorage: () => (state) => {
         if (state) state.hydrated = true;
       },

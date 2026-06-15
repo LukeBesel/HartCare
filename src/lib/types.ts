@@ -315,11 +315,89 @@ export interface Subscription {
   seats: number;
 }
 
+/* ----------------------------- Customization ----------------------------- */
+
+export type ThemeMode = "light" | "dark" | "system";
+export type AccentName =
+  | "indigo"
+  | "blue"
+  | "violet"
+  | "teal"
+  | "emerald"
+  | "amber"
+  | "rose"
+  | "crimson"
+  | "slate"
+  | "sunset"
+  | "ocean"
+  | "custom";
+export type UIScale = "compact" | "cozy" | "comfortable";
+export type RadiusStyle = "sharp" | "soft" | "round";
+export type FontChoice = "sans" | "rounded" | "mono" | "serif";
+export type SurfaceStyle = "clean" | "tinted";
+
+export type DashboardWidgetId =
+  | "rings"
+  | "water"
+  | "workout"
+  | "meals"
+  | "macros"
+  | "weight"
+  | "steps"
+  | "sleep"
+  | "mood"
+  | "medications"
+  | "appointments"
+  | "goals"
+  | "streaks"
+  | "pets"
+  | "family"
+  | "quote";
+
+export interface WidgetConfig {
+  id: DashboardWidgetId;
+  enabled: boolean;
+  /** Column span on the dashboard grid (1–3). */
+  w: 1 | 2 | 3;
+}
+
 export interface Settings {
-  theme: "light" | "dark" | "system";
+  theme: ThemeMode;
   units: "imperial" | "metric";
   notificationsEnabled: boolean;
   waterGoalOz: number;
   stepGoal: number;
   sleepGoalHours: number;
+
+  // Appearance / customization
+  accent: AccentName;
+  customAccent?: string; // hex, used when accent === "custom"
+  scale: UIScale;
+  radius: RadiusStyle;
+  font: FontChoice;
+  glow: boolean;
+  reduceMotion: boolean;
+  surface: SurfaceStyle;
+
+  // Dashboard widget layout (order + visibility + width)
+  dashboard: WidgetConfig[];
 }
+
+export const DEFAULT_DASHBOARD: WidgetConfig[] = [
+  { id: "rings", enabled: true, w: 3 },
+  { id: "workout", enabled: true, w: 2 },
+  { id: "water", enabled: true, w: 1 },
+  { id: "meals", enabled: true, w: 2 },
+  { id: "medications", enabled: true, w: 1 },
+  { id: "weight", enabled: true, w: 2 },
+  { id: "appointments", enabled: true, w: 1 },
+  { id: "streaks", enabled: true, w: 1 },
+  { id: "pets", enabled: true, w: 1 },
+  { id: "quote", enabled: true, w: 1 },
+  { id: "macros", enabled: false, w: 1 },
+  { id: "steps", enabled: false, w: 1 },
+  { id: "sleep", enabled: false, w: 1 },
+  { id: "mood", enabled: false, w: 1 },
+  { id: "goals", enabled: false, w: 2 },
+  { id: "family", enabled: false, w: 1 },
+];
