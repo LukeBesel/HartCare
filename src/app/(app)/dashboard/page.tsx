@@ -74,7 +74,7 @@ export default function DashboardPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {visibleWidgets.map((w) => (
             <div key={w.id} className={SPAN_CLASS[w.w]}>
-              {WIDGETS[w.id].render()}
+              {WIDGETS[w.id].render(w.options)}
             </div>
           ))}
           {visibleWidgets.length === 0 && (

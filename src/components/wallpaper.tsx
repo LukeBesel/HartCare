@@ -25,12 +25,10 @@ export function WallpaperLayer() {
     return () => clearInterval(t);
   }, [isSlideshow, wp?.intervalSec, images.length]);
 
-  // Keep the index in range when the image list changes.
-  useEffect(() => {
-    if (index >= images.length && images.length > 0) setIndex(0);
-  }, [images.length, index]);
-
   if (!wp || wp.mode === "none") return null;
+
+  // Clamp during render (no effect needed) so the list can change safely.
+  const current = images.length ? index % images.length : 0;
 
   const blur = wp.blur ? `blur(${wp.blur}px)` : undefined;
   const transform = wp.blur ? "scale(1.06)" : undefined;
@@ -61,7 +59,7 @@ export function WallpaperLayer() {
             style={{
               backgroundImage: `url(${src})`,
               backgroundSize: wp.fit === "contain" ? "contain" : "cover",
-              opacity: i === index ? 1 : 0,
+              opacity: i === current ? 1 : 0,
               filter: blur,
               transform,
             }}
