@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (toggle .dark on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  HartCare design system
+  Brand: premium, trustworthy, calm.
+  Palette: warm white, soft blue, charcoal, subtle green accents.
+*/
+@theme {
+  /* Soft blue brand */
+  --color-brand-50: #eef5ff;
+  --color-brand-100: #d9e8ff;
+  --color-brand-200: #bcd6ff;
+  --color-brand-300: #8ebcff;
+  --color-brand-400: #5b97fb;
+  --color-brand-500: #3b76f0;
+  --color-brand-600: #2a59d6;
+  --color-brand-700: #2347ad;
+  --color-brand-800: #213d8a;
+  --color-brand-900: #21386e;
+
+  /* Subtle green accent */
+  --color-mint-50: #edfdf5;
+  --color-mint-100: #d3f8e5;
+  --color-mint-200: #aaefce;
+  --color-mint-300: #71e0b1;
+  --color-mint-400: #38c890;
+  --color-mint-500: #15ad76;
+  --color-mint-600: #0a8c60;
+  --color-mint-700: #0a6f4e;
+  --color-mint-800: #0c5840;
+  --color-mint-900: #0b4836;
+
+  /* Warm charcoal neutrals */
+  --color-ink-50: #f7f7f6;
+  --color-ink-100: #eeedeb;
+  --color-ink-200: #dcdad6;
+  --color-ink-300: #c0bdb6;
+  --color-ink-400: #9c988f;
+  --color-ink-500: #7c7870;
+  --color-ink-600: #635f59;
+  --color-ink-700: #4f4c47;
+  --color-ink-800: #36342f;
+  --color-ink-900: #21201d;
+  --color-ink-950: #161512;
+
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Semantic surface tokens, swapped in dark mode */
+:root {
+  --surface: #fbfaf8; /* warm white */
+  --surface-card: #ffffff;
+  --surface-muted: #f3f2ef;
+  --border-c: #e7e5e0;
+  --text-c: #21201d;
+  --text-muted-c: #635f59;
+}
+
+.dark {
+  --surface: #131210;
+  --surface-card: #1c1b18;
+  --surface-muted: #232220;
+  --border-c: #312f2b;
+  --text-c: #f3f2ef;
+  --text-muted-c: #a8a49b;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-card: var(--surface-card);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border-c);
+  --color-text: var(--text-c);
+  --color-text-muted: var(--text-muted-c);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--surface);
+  color: var(--text-c);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Reusable component classes */
+@layer components {
+  .card {
+    border-radius: 1.25rem;
+    background: var(--surface-card);
+    border: 1px solid var(--border-c);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 1px 3px rgb(0 0 0 / 0.03);
+  }
+  .card-pad {
+    padding: 1.25rem;
+  }
+  @media (min-width: 640px) {
+    .card-pad {
+      padding: 1.5rem;
+    }
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none bg-brand-600 text-white hover:bg-brand-700;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none text-text hover:bg-surface-muted;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 disabled:pointer-events-none border border-border text-text hover:bg-surface-muted;
+  }
+  .input {
+    @apply w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none focus:border-brand-400;
+  }
+  .input::placeholder {
+    color: var(--text-muted-c);
+  }
+  .label {
+    @apply block text-sm font-medium text-text mb-1.5;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-c);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-in {
+  animation: fade-in-up 0.4s ease both;
+}
