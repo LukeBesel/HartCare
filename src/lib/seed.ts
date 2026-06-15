@@ -1,4 +1,5 @@
 import { isoDaysAgo, isoDaysFromNow, todayISO, uid } from "./utils";
+import { DEFAULT_DASHBOARD } from "./types";
 import type {
   Allergy,
   AppNotification,
@@ -289,6 +290,14 @@ export function buildSeed(): DB {
     waterGoalOz: 100,
     stepGoal: 10000,
     sleepGoalHours: 8,
+    accent: "indigo",
+    scale: "cozy",
+    radius: "soft",
+    font: "sans",
+    glow: true,
+    reduceMotion: false,
+    surface: "clean",
+    dashboard: DEFAULT_DASHBOARD.map((w) => ({ ...w })),
   };
 
   return {

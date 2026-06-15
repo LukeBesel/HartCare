@@ -18,9 +18,11 @@ import {
   Menu,
   Monitor,
   Moon,
+  Palette,
   Sun,
   X,
 } from "lucide-react";
+import { AppearanceStudio } from "./appearance/AppearanceStudio";
 import Link from "next/link";
 import { createClient, SUPABASE_ENABLED } from "@/lib/supabase/client";
 import { usePathname, useRouter } from "next/navigation";
@@ -258,9 +260,48 @@ function UpgradeCard() {
   );
 }
 
+function AppearanceSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <aside className="relative w-full max-w-md flex flex-col bg-surface border-l border-border shadow-xl animate-in">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 sticky top-0 bg-surface/90 backdrop-blur z-10">
+          <div className="flex items-center gap-2.5">
+            <span className="grid place-items-center h-8 w-8 rounded-xl bg-brand-gradient text-white shadow-sm">
+              <Palette size={16} />
+            </span>
+            <h2 className="font-semibold text-text">Customize appearance</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-text-muted hover:text-text rounded-lg p-1"
+            aria-label="Close appearance studio"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          <AppearanceStudio inSheet />
+        </div>
+      </aside>
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const mounted = useMounted();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(false);
   const router = useRouter();
 
   if (!mounted) {
@@ -318,6 +359,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Badge color="mint" className="hidden sm:inline-flex">
             <span className="h-1.5 w-1.5 rounded-full bg-mint-500" /> Synced
           </Badge>
+          <button
+            onClick={() => setStudioOpen(true)}
+            title="Customize appearance"
+            className="grid place-items-center h-9 w-9 rounded-xl hover:bg-surface-muted text-text-muted hover:text-text transition-colors"
+          >
+            <Palette size={18} />
+          </button>
           <ThemeToggle />
           <NotificationsBell />
           <button
@@ -341,6 +389,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">{children}</main>
       </div>
+
+      <AppearanceSheet open={studioOpen} onClose={() => setStudioOpen(false)} />
     </div>
   );
 }
