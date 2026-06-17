@@ -1,9 +1,10 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import type { Appearance, Settings } from "@/lib/types";
+import type { Appearance, DayPart, Settings } from "@/lib/types";
 import { DEFAULT_WALLPAPER } from "@/lib/types";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { CURATED_THEMES } from "./gallery";
 
 /** The household-wide default appearance, pulled from the flat Settings fields. */
 export function globalAppearance(s: Settings): Appearance {
@@ -17,6 +18,7 @@ export function globalAppearance(s: Settings): Appearance {
     glow: s.glow,
     reduceMotion: s.reduceMotion,
     surface: s.surface,
+    cardStyle: s.cardStyle ?? "soft",
     wallpaper: s.wallpaper ?? DEFAULT_WALLPAPER,
   };
 }
@@ -30,11 +32,58 @@ export function effectiveAppearance(s: Settings, profileId: string): Appearance 
   return base;
 }
 
-/** Reactive effective appearance for the current profile (stable via useMemo). */
+function dayPart(hour: number): DayPart {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour < 17) return "afternoon";
+  if (hour < 21) return "evening";
+  return "night";
+}
+
+/** Applies the theme schedule (time-of-day preset + auto-dark) on top of a base. */
+export function scheduledAppearance(base: Appearance, s: Settings, now = new Date()): Appearance {
+  const sch = s.schedule;
+  if (!sch?.enabled) return base;
+  let out = base;
+
+  if (sch.byTime) {
+    const pid = sch.slots?.[dayPart(now.getHours())];
+    if (pid) {
+      const preset = [...(s.presets ?? []), ...CURATED_THEMES].find((p) => p.id === pid);
+      if (preset) out = { ...preset.appearance };
+    }
+  }
+
+  if (sch.autoDark) {
+    const h = now.getHours();
+    const { darkFrom, darkTo } = sch;
+    const dark = darkFrom <= darkTo ? h >= darkFrom && h < darkTo : h >= darkFrom || h < darkTo;
+    out = { ...out, theme: dark ? "dark" : "light" };
+  }
+  return out;
+}
+
+/**
+ * Reactive effective appearance for the current profile (stable via useMemo),
+ * with theme scheduling applied and re-evaluated every minute.
+ */
 export function useEffectiveAppearance(): Appearance {
   const settings = useStore((s) => s.db.settings);
   const pid = useStore((s) => s.currentProfileId);
-  return useMemo(() => effectiveAppearance(settings, pid), [settings, pid]);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!settings.schedule?.enabled) return;
+    const id = setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, [settings.schedule?.enabled]);
+
+  // Re-derive "now" each minute tick so schedule transitions apply on time.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `tick` intentionally drives the refresh
+  const now = useMemo(() => new Date(), [tick]);
+  return useMemo(
+    () => scheduledAppearance(effectiveAppearance(settings, pid), settings, now),
+    [settings, pid, now],
+  );
 }
 
 /**

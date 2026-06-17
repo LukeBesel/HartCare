@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffectiveAppearance } from "@/lib/theme/resolve";
-import { wallpaperPresetCss } from "@/lib/theme/wallpaper";
+import { isAnimatedPreset, seasonalPresetId, wallpaperPresetCss } from "@/lib/theme/wallpaper";
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 /**
@@ -33,10 +34,18 @@ export function WallpaperLayer() {
   const blur = wp.blur ? `blur(${wp.blur}px)` : undefined;
   const transform = wp.blur ? "scale(1.06)" : undefined;
 
+  // Preset & seasonal both render a gradient preset (seasonal picks by month).
+  const presetId = wp.mode === "seasonal" ? seasonalPresetId() : wp.preset;
+  const showPreset = wp.mode === "preset" || wp.mode === "seasonal";
+  const animated = showPreset && isAnimatedPreset(presetId);
+
   return (
     <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      {wp.mode === "preset" && (
-        <div className="absolute inset-0" style={{ background: wallpaperPresetCss(wp.preset), filter: blur, transform }} />
+      {showPreset && (
+        <div
+          className={cn("absolute inset-0", animated && "wp-anim")}
+          style={{ background: wallpaperPresetCss(presetId), filter: blur, transform: animated ? undefined : transform }}
+        />
       )}
 
       {wp.mode === "image" && images[0] && (

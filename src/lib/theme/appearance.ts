@@ -64,4 +64,5 @@ export function applyAppearance(root: HTMLElement, s: Appearance) {
   root.classList.toggle("fx-glow", !!s.glow);
   root.classList.toggle("reduce-motion", !!s.reduceMotion);
   root.dataset.surface = s.surface ?? "clean";
+  root.dataset.cards = s.cardStyle ?? "soft";
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { AreaTrend, BarTrend, LineTrend, MiniSpark } from "@/components/charts";
+import { AreaTrend, BarTrend, LineTrend } from "@/components/charts";
 import {
   Avatar,
   Badge,
@@ -51,6 +51,39 @@ function opt<T extends string | number | boolean>(
 ): T {
   const v = options?.[key];
   return v === undefined ? fallback : (v as T);
+}
+
+type ChartKind = "line" | "area" | "bars";
+
+/** Render the chart component selected by the `chart` option. */
+function TrendChart({
+  kind,
+  data,
+  color,
+  unit,
+  height,
+  goal,
+}: {
+  kind: ChartKind;
+  data: { label: string; value: number }[];
+  color: string;
+  unit?: string;
+  height: number;
+  goal?: number;
+}) {
+  if (kind === "bars") return <BarTrend data={data} unit={unit} height={height} color={color} goal={goal} />;
+  if (kind === "area") return <AreaTrend data={data} unit={unit} height={height} color={color} />;
+  return <LineTrend data={data} unit={unit} height={height} color={color} />;
+}
+
+/** Big headline stat used by compact-mode trend widgets. */
+function CompactStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="py-2">
+      <div className="text-3xl font-bold tabular-nums">{value}</div>
+      <div className="text-sm text-text-muted">{label}</div>
+    </div>
+  );
 }
 
 /* ------------------------------ Ring helper ------------------------------ */
@@ -206,9 +239,10 @@ export function MealsWidget({ options }: { options?: WidgetOptions }) {
 }
 
 /* ------------------------------- macros ---------------------------------- */
-export function MacrosWidget() {
+export function MacrosWidget({ options }: { options?: WidgetOptions }) {
   const meals = useProfileRows("mealPlans");
   const t = todayISO();
+  const compact = opt(options, "compact", false);
   const macros = useMemo(() => {
     const today = meals.filter((m) => m.date === t);
     return {
@@ -230,17 +264,28 @@ export function MacrosWidget() {
         icon={<Flame size={18} />}
         action={<Link href="/nutrition" className="text-sm text-brand-600 hover:underline">Details</Link>}
       />
-      <div className="space-y-3">
-        {rows.map((r) => (
-          <div key={r.label}>
-            <div className="flex items-center justify-between text-sm mb-1">
-              <span>{r.label}</span>
-              <span className="text-text-muted">{r.value} / {r.target} g</span>
+      {compact ? (
+        <div className="flex items-center justify-between gap-2">
+          {rows.map((r) => (
+            <div key={r.label} className="min-w-0 text-center flex-1">
+              <div className="text-lg font-bold tabular-nums">{r.value}g</div>
+              <div className="text-xs text-text-muted truncate">{r.label}</div>
             </div>
-            <ProgressBar value={(r.value / r.target) * 100} color={r.color} />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((r) => (
+            <div key={r.label}>
+              <div className="flex items-center justify-between text-sm mb-1">
+                <span>{r.label}</span>
+                <span className="text-text-muted">{r.value} / {r.target} g</span>
+              </div>
+              <ProgressBar value={(r.value / r.target) * 100} color={r.color} />
+            </div>
+          ))}
+        </div>
+      )}
     </CardPad>
   );
 }
@@ -250,6 +295,9 @@ export function WeightWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const weights = useProfileRows("weights");
   const range = Number(opt(options, "range", "30"));
+  const chart = opt<ChartKind>(options, "chart", "area");
+  const color = opt(options, "color", "var(--color-mint-500)");
+  const compact = opt(options, "compact", false);
   const weightSeries = useMemo(
     () =>
       [...weights]
@@ -270,8 +318,10 @@ export function WeightWidget({ options }: { options?: WidgetOptions }) {
         }
         action={<Link href="/health" className="text-sm text-brand-600 hover:underline">Details</Link>}
       />
-      {weightSeries.length > 1 ? (
-        <AreaTrend data={weightSeries} unit="lbs" height={180} color="var(--color-mint-500)" />
+      {compact ? (
+        <CompactStat value={stats.latestWeight ? `${stats.latestWeight} lbs` : "—"} label="Latest weigh-in" />
+      ) : weightSeries.length > 1 ? (
+        <TrendChart kind={chart} data={weightSeries} unit="lbs" height={180} color={color} />
       ) : (
         <p className="text-sm text-text-muted">Log a weigh-in to see your trend.</p>
       )}
@@ -284,6 +334,10 @@ export function StepsWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const stepPct = Math.round((stats.steps / stats.stepGoal) * 100);
   const range = Number(opt(options, "range", "30"));
+  const chart = opt<ChartKind>(options, "chart", "line");
+  const color = opt(options, "color", "var(--color-brand-500)");
+  const compact = opt(options, "compact", false);
+  const goalLine = opt(options, "goalLine", true);
   // Steps are synthetic for the demo; derive a stable N-day series from today's value.
   const series = useMemo(() => {
     const factors = [0.82, 1.1, 0.94, 1.18, 0.76, 1.04, 1.0];
@@ -300,12 +354,16 @@ export function StepsWidget({ options }: { options?: WidgetOptions }) {
         icon={<Footprints size={18} />}
         subtitle={`${stats.steps.toLocaleString()} of ${stats.stepGoal.toLocaleString()}`}
       />
-      <div className="flex items-center gap-4">
-        <ProgressRing value={stepPct} color="var(--color-brand-500)" label={<span className="text-brand-600">{Math.min(999, stepPct)}%</span>} />
-        <div className="flex-1 min-w-0">
-          <MiniSpark data={series} color="var(--color-brand-500)" />
+      {compact ? (
+        <CompactStat value={stats.steps.toLocaleString()} label={`of ${stats.stepGoal.toLocaleString()} steps`} />
+      ) : (
+        <div className="flex items-center gap-4">
+          <ProgressRing value={stepPct} color={color} label={<span style={{ color }}>{Math.min(999, stepPct)}%</span>} />
+          <div className="flex-1 min-w-0">
+            <TrendChart kind={chart} data={series} unit="steps" height={120} color={color} goal={goalLine ? stats.stepGoal : undefined} />
+          </div>
         </div>
-      </div>
+      )}
     </CardPad>
   );
 }
@@ -315,6 +373,10 @@ export function SleepWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const sleepLogs = useProfileRows("sleepLogs");
   const range = Number(opt(options, "range", "30"));
+  const chart = opt<ChartKind>(options, "chart", "bars");
+  const color = opt(options, "color", "#a855f7");
+  const compact = opt(options, "compact", false);
+  const goalLine = opt(options, "goalLine", true);
   const series = useDailySeries(sleepLogs, "hours", range, "last");
   const sleepHrs = stats.sleepLast?.hours ?? 0;
   return (
@@ -325,7 +387,11 @@ export function SleepWidget({ options }: { options?: WidgetOptions }) {
         subtitle={stats.sleepLast ? `Last night ${sleepHrs} h · goal ${stats.sleepGoal} h` : undefined}
         action={<Link href="/wellness" className="text-sm text-brand-600 hover:underline">Details</Link>}
       />
-      <BarTrend data={series} unit="h" height={160} color="#a855f7" goal={stats.sleepGoal} />
+      {compact ? (
+        <CompactStat value={`${sleepHrs} h`} label={`goal ${stats.sleepGoal} h`} />
+      ) : (
+        <TrendChart kind={chart} data={series} unit="h" height={160} color={color} goal={goalLine ? stats.sleepGoal : undefined} />
+      )}
     </CardPad>
   );
 }
@@ -335,6 +401,9 @@ export function MoodWidget({ options }: { options?: WidgetOptions }) {
   const stats = useTodayStats();
   const moods = useProfileRows("moods");
   const range = Number(opt(options, "range", "30"));
+  const chart = opt<ChartKind>(options, "chart", "line");
+  const color = opt(options, "color", "#f59e0b");
+  const compact = opt(options, "compact", false);
   const series = useDailySeries(moods, "mood", range, "last");
   const last = stats.moodLast;
   const emoji = last ? MOOD_EMOJI[Math.max(0, Math.min(4, Math.round(last.mood) - 1))] : "🙂";
@@ -346,12 +415,19 @@ export function MoodWidget({ options }: { options?: WidgetOptions }) {
         subtitle={last ? `Feeling ${emoji} on ${relativeDay(last.date)}` : "No check-ins yet"}
         action={<Link href="/wellness" className="text-sm text-brand-600 hover:underline">Check in</Link>}
       />
-      <div className="flex items-center gap-4">
-        <span className="text-4xl shrink-0">{emoji}</span>
-        <div className="flex-1 min-w-0">
-          <LineTrend data={series} height={140} color="#f59e0b" />
+      {compact ? (
+        <div className="flex items-center gap-4">
+          <span className="text-4xl shrink-0">{emoji}</span>
+          <CompactStat value={last ? String(Math.round(last.mood)) : "—"} label="Latest mood" />
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center gap-4">
+          <span className="text-4xl shrink-0">{emoji}</span>
+          <div className="flex-1 min-w-0">
+            <TrendChart kind={chart} data={series} height={140} color={color} />
+          </div>
+        </div>
+      )}
     </CardPad>
   );
 }

@@ -48,6 +48,7 @@ export function decodeTheme(code: string): Appearance | null {
       glow: parsed.glow ?? true,
       reduceMotion: parsed.reduceMotion ?? false,
       surface: parsed.surface ?? "clean",
+      cardStyle: parsed.cardStyle ?? "soft",
       wallpaper: { ...DEFAULT_WALLPAPER, ...parsed.wallpaper, images: [] },
     };
   } catch {

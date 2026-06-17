@@ -9,23 +9,35 @@ import {
 } from "@/lib/theme/appearance";
 import { useAppearanceControls } from "@/lib/theme/resolve";
 import { WALLPAPER_PRESETS, wallpaperPresetCss } from "@/lib/theme/wallpaper";
+import { CURATED_THEMES, randomTheme } from "@/lib/theme/gallery";
 import { decodeTheme, encodeTheme } from "@/lib/theme/share";
 import { uploadWallpaper } from "@/lib/images";
 import { useCurrentProfile, useSettings, useStore } from "@/lib/store";
-import type { AccentName, Wallpaper, WallpaperPresetId } from "@/lib/types";
+import type {
+  AccentName,
+  CardStyle,
+  DayPart,
+  ThemeSchedule,
+  Wallpaper,
+  WallpaperPresetId,
+} from "@/lib/types";
 import { cn, uid } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import {
   Check,
+  Clock,
   Contrast,
   Copy,
   Image as ImageIcon,
   Images,
+  LayoutTemplate,
+  Layers,
   Monitor,
   Moon,
   Palette,
   RotateCcw,
   Save,
+  Shuffle,
   Sparkles,
   Square,
   Sun,
@@ -97,7 +109,20 @@ export function AppearanceStudio({ inSheet }: { inSheet?: boolean }) {
     useAppearanceControls();
   const currentProfile = useCurrentProfile();
   const presets = useSettings().presets;
+  const schedule = useSettings().schedule;
   const updateSettings = useStore((s) => s.updateSettings);
+
+  function setSchedule(patch: Partial<ThemeSchedule>) {
+    updateSettings({ schedule: { ...schedule, ...patch } });
+  }
+
+  const scheduleOptions = [...presets, ...CURATED_THEMES];
+  const dayParts: { part: DayPart; label: string }[] = [
+    { part: "morning", label: "Morning" },
+    { part: "afternoon", label: "Afternoon" },
+    { part: "evening", label: "Evening" },
+    { part: "night", label: "Night" },
+  ];
 
   const [presetName, setPresetName] = useState("");
   const [copied, setCopied] = useState(false);
@@ -198,6 +223,9 @@ export function AppearanceStudio({ inSheet }: { inSheet?: boolean }) {
   const wallpaperGridCols = inSheet
     ? "grid-cols-2"
     : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
+  const galleryGridCols = inSheet
+    ? "grid-cols-2"
+    : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
 
   return (
     <div className={cn("space-y-5", inSheet && "space-y-4")}>
@@ -220,6 +248,76 @@ export function AppearanceStudio({ inSheet }: { inSheet?: boolean }) {
             </p>
           </div>
           <Toggle checked={perProfile} onChange={(v) => setPerProfile(v)} />
+        </div>
+      </CardPad>
+
+      {/* Theme gallery */}
+      <CardPad className={inSheet ? "p-4" : undefined}>
+        <div className="flex items-start justify-between gap-3">
+          <SectionTitle
+            title="Theme gallery"
+            subtitle="Curated looks &mdash; tap to apply"
+            icon={<LayoutTemplate size={18} />}
+          />
+          <button
+            type="button"
+            className="btn-outline shrink-0"
+            onClick={() => setAppearance(randomTheme())}
+          >
+            <Shuffle size={16} /> Surprise me
+          </button>
+        </div>
+        <div className={cn("grid gap-3", galleryGridCols)}>
+          {CURATED_THEMES.map((theme) => {
+            const ta = theme.appearance;
+            const acc = resolveAccent(ta.accent, ta.customAccent);
+            const swatchBg =
+              ta.wallpaper.mode === "preset" && ta.wallpaper.preset
+                ? wallpaperPresetCss(ta.wallpaper.preset)
+                : gradientFor(acc.gradient[0], acc.gradient[1]);
+            const selected =
+              appearance.accent === ta.accent &&
+              appearance.wallpaper.mode === ta.wallpaper.mode &&
+              appearance.wallpaper.preset === ta.wallpaper.preset;
+            return (
+              <button
+                key={theme.id}
+                type="button"
+                onClick={() => setAppearance(ta)}
+                aria-pressed={selected}
+                aria-label={`Apply ${theme.name}`}
+                className={cn(
+                  "group flex flex-col gap-2 rounded-2xl border p-2 text-left transition-transform",
+                  "hover:-translate-y-0.5 hover:shadow-md",
+                  selected ? "border-text ring-1 ring-text" : "border-border",
+                )}
+              >
+                <span
+                  className="relative block h-20 w-full overflow-hidden rounded-xl shadow-sm ring-1 ring-black/5"
+                  style={{ background: swatchBg }}
+                  aria-hidden
+                >
+                  <span
+                    className="absolute bottom-2 left-2 h-5 w-5 rounded-full ring-2 ring-white/80 shadow"
+                    style={{ background: gradientFor(acc.gradient[0], acc.gradient[1]) }}
+                  />
+                  {selected && (
+                    <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-white/90 text-text shadow">
+                      <Check size={14} strokeWidth={3} />
+                    </span>
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-text">
+                    {theme.name}
+                  </span>
+                  <span className="block truncate text-[11px] leading-tight text-text-muted">
+                    {theme.description}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </CardPad>
 
@@ -399,6 +497,33 @@ export function AppearanceStudio({ inSheet }: { inSheet?: boolean }) {
               onChange={(font) => setAppearance({ font })}
             />
           </div>
+          <div
+            className={cn(
+              "flex gap-3",
+              inSheet ? "flex-col" : "flex-wrap items-center justify-between",
+            )}
+          >
+            <span className="flex items-center gap-2 text-sm font-medium text-text">
+              <Layers size={15} className="text-text-muted" /> Card style
+            </span>
+            <Segmented
+              options={[
+                { label: "Soft", value: "soft" },
+                { label: "Flat", value: "flat" },
+                { label: "Outline", value: "outline" },
+                { label: "Glass", value: "glass" },
+              ]}
+              value={appearance.cardStyle}
+              onChange={(cardStyle) =>
+                setAppearance({ cardStyle: cardStyle as CardStyle })
+              }
+            />
+          </div>
+          {appearance.cardStyle === "glass" && (
+            <p className="text-xs text-text-muted">
+              Glass cards look best over a wallpaper.
+            </p>
+          )}
         </div>
       </CardPad>
 
@@ -413,6 +538,7 @@ export function AppearanceStudio({ inSheet }: { inSheet?: boolean }) {
           options={[
             { label: "None", value: "none" },
             { label: "Preset", value: "preset" },
+            { label: "Seasonal", value: "seasonal" },
             { label: "Image", value: "image" },
             { label: "Slideshow", value: "slideshow" },
           ]}
@@ -421,6 +547,13 @@ export function AppearanceStudio({ inSheet }: { inSheet?: boolean }) {
             patchWallpaper({ mode: mode as Wallpaper["mode"] })
           }
         />
+
+        {/* Seasonal */}
+        {wp.mode === "seasonal" && (
+          <p className="mt-4 text-xs text-text-muted">
+            Changes with the season &mdash; the wallpaper is auto-picked by month.
+          </p>
+        )}
 
         {/* Preset grid */}
         {wp.mode === "preset" && (
@@ -446,6 +579,11 @@ export function AppearanceStudio({ inSheet }: { inSheet?: boolean }) {
                     )}
                     style={{ background: wallpaperPresetCss(p.id) }}
                   >
+                    {p.animated && (
+                      <Badge color="mint" className="absolute left-1.5 top-1.5">
+                        Live
+                      </Badge>
+                    )}
                     {selected && (
                       <span className="grid h-6 w-6 place-items-center rounded-full bg-white/90 text-text shadow">
                         <Check size={15} strokeWidth={3} />
@@ -794,6 +932,126 @@ export function AppearanceStudio({ inSheet }: { inSheet?: boolean }) {
             </div>
           </div>
         </div>
+      </CardPad>
+
+      {/* Theme schedule */}
+      <CardPad className={inSheet ? "p-4" : undefined}>
+        <SectionTitle
+          title="Theme schedule"
+          subtitle="Let the look change with the time of day"
+          icon={<Clock size={18} />}
+        />
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-medium text-text">Automatic theme</div>
+            <p className="text-xs text-text-muted">
+              Applies on top of your chosen theme and re-checks every minute.
+            </p>
+          </div>
+          <Toggle
+            checked={schedule.enabled}
+            onChange={(enabled) => setSchedule({ enabled })}
+          />
+        </div>
+
+        {schedule.enabled && (
+          <div className="mt-4 space-y-4">
+            {/* Auto dark */}
+            <div className="rounded-xl border border-border bg-surface-muted/50 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 font-medium text-text">
+                  <Moon size={15} className="text-text-muted" /> Auto dark
+                </div>
+                <Toggle
+                  checked={schedule.autoDark}
+                  onChange={(autoDark) => setSchedule({ autoDark })}
+                />
+              </div>
+              {schedule.autoDark && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-text">
+                  <span className="label">Dark from</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={23}
+                    value={schedule.darkFrom}
+                    onChange={(e) =>
+                      setSchedule({
+                        darkFrom: Math.min(23, Math.max(0, Number(e.target.value) || 0)),
+                      })
+                    }
+                    className="input w-20"
+                    aria-label="Dark mode start hour"
+                  />
+                  <span className="label">to</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={23}
+                    value={schedule.darkTo}
+                    onChange={(e) =>
+                      setSchedule({
+                        darkTo: Math.min(23, Math.max(0, Number(e.target.value) || 0)),
+                      })
+                    }
+                    className="input w-20"
+                    aria-label="Dark mode end hour"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* By time of day */}
+            <div className="rounded-xl border border-border bg-surface-muted/50 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 font-medium text-text">
+                  <Sun size={15} className="text-text-muted" /> By time of day
+                </div>
+                <Toggle
+                  checked={schedule.byTime}
+                  onChange={(byTime) => setSchedule({ byTime })}
+                />
+              </div>
+              {schedule.byTime && (
+                <div className="mt-3 space-y-2.5">
+                  {dayParts.map(({ part, label }) => (
+                    <label
+                      key={part}
+                      className={cn(
+                        "flex gap-2",
+                        inSheet
+                          ? "flex-col"
+                          : "flex-wrap items-center justify-between",
+                      )}
+                    >
+                      <span className="text-sm font-medium text-text">{label}</span>
+                      <select
+                        className="input"
+                        value={schedule.slots[part] ?? ""}
+                        onChange={(e) =>
+                          setSchedule({
+                            slots: {
+                              ...schedule.slots,
+                              [part]: e.target.value || undefined,
+                            },
+                          })
+                        }
+                        aria-label={`${label} theme`}
+                      >
+                        <option value="">&mdash; none &mdash;</option>
+                        {scheduleOptions.map((opt) => (
+                          <option key={opt.id} value={opt.id}>
+                            {opt.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </CardPad>
 
       {/* Reset */}

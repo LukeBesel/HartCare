@@ -48,6 +48,7 @@ root.style.setProperty('--app-font',D.fonts[a.font]||D.fonts.sans);
 root.classList.toggle('fx-glow',a.glow!==false);
 root.classList.toggle('reduce-motion',!!a.reduceMotion);
 root.dataset.surface=a.surface||'clean';
+root.dataset.cards=a.cardStyle||'soft';
 if(a.wallpaper&&a.wallpaper.mode&&a.wallpaper.mode!=='none')root.classList.add('has-wallpaper');
 }catch(e){}})();`;
   return <script dangerouslySetInnerHTML={{ __html: code }} />;
