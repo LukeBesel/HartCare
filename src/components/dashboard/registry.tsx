@@ -68,18 +68,67 @@ const RANGE_OPTION: WidgetOption = {
   type: "select",
   choices: [
     { label: "7 days", value: "7" },
+    { label: "14 days", value: "14" },
     { label: "30 days", value: "30" },
     { label: "90 days", value: "90" },
   ],
   default: "30",
 };
 
+/** Chart-type select shared by trend widgets. */
+function chartOption(def: "line" | "area" | "bars"): WidgetOption {
+  return {
+    key: "chart",
+    label: "Chart type",
+    type: "select",
+    choices: [
+      { label: "Line", value: "line" },
+      { label: "Area", value: "area" },
+      { label: "Bars", value: "bars" },
+    ],
+    default: def,
+  };
+}
+
+/** Color select shared by trend widgets. Values map directly to CSS colors. */
+function colorOption(def: string): WidgetOption {
+  return {
+    key: "color",
+    label: "Color",
+    type: "select",
+    choices: [
+      { label: "Accent", value: "var(--color-brand-500)" },
+      { label: "Mint", value: "var(--color-mint-500)" },
+      { label: "Sky", value: "#38bdf8" },
+      { label: "Violet", value: "#a855f7" },
+      { label: "Rose", value: "#f43f5e" },
+      { label: "Amber", value: "#f59e0b" },
+    ],
+    default: def,
+  };
+}
+
+/** Compact-mode toggle: show just the headline stat. */
+const COMPACT_OPTION: WidgetOption = { key: "compact", label: "Compact (stat only)", type: "toggle", default: false };
+
+/** Goal-line toggle for bar trends. */
+const GOAL_LINE_OPTION: WidgetOption = { key: "goalLine", label: "Highlight goal", type: "toggle", default: true };
+
+/** Build the full option set for a trend widget. */
+function trendOptions(chartDefault: "line" | "area" | "bars", colorDefault: string, withGoalLine = false): WidgetOption[] {
+  const opts: WidgetOption[] = [chartOption(chartDefault), colorOption(colorDefault), COMPACT_OPTION, RANGE_OPTION];
+  if (withGoalLine) opts.push(GOAL_LINE_OPTION);
+  return opts;
+}
+
 export const WIDGETS: Record<DashboardWidgetId, WidgetMeta> = {
   rings: { title: "Activity rings", icon: Flame, render: () => <RingsWidget /> },
   water: {
     title: "Water intake",
     icon: Droplets,
-    options: [{ key: "goalOverride", label: "Goal override (oz, 0 = profile)", type: "number", min: 0, max: 200, step: 8, default: 0 }],
+    options: [
+      { key: "goalOverride", label: "Goal override (oz, 0 = profile)", type: "number", min: 0, max: 200, step: 8, default: 0 },
+    ],
     render: (o) => <WaterWidget options={o} />,
   },
   workout: { title: "Today's workout", icon: Dumbbell, render: () => <WorkoutWidget /> },
@@ -89,11 +138,16 @@ export const WIDGETS: Record<DashboardWidgetId, WidgetMeta> = {
     options: [{ key: "showMacros", label: "Show protein total", type: "toggle", default: true }],
     render: (o) => <MealsWidget options={o} />,
   },
-  macros: { title: "Macros today", icon: Flame, render: () => <MacrosWidget /> },
-  weight: { title: "Weight trend", icon: Weight, options: [RANGE_OPTION], render: (o) => <WeightWidget options={o} /> },
-  steps: { title: "Steps", icon: Footprints, options: [RANGE_OPTION], render: (o) => <StepsWidget options={o} /> },
-  sleep: { title: "Sleep", icon: Moon, options: [RANGE_OPTION], render: (o) => <SleepWidget options={o} /> },
-  mood: { title: "Mood", icon: Smile, options: [RANGE_OPTION], render: (o) => <MoodWidget options={o} /> },
+  macros: {
+    title: "Macros today",
+    icon: Flame,
+    options: [{ key: "compact", label: "Compact (totals only)", type: "toggle", default: false }],
+    render: (o) => <MacrosWidget options={o} />,
+  },
+  weight: { title: "Weight trend", icon: Weight, options: trendOptions("area", "var(--color-mint-500)"), render: (o) => <WeightWidget options={o} /> },
+  steps: { title: "Steps", icon: Footprints, options: trendOptions("line", "var(--color-brand-500)", true), render: (o) => <StepsWidget options={o} /> },
+  sleep: { title: "Sleep", icon: Moon, options: trendOptions("bars", "#a855f7", true), render: (o) => <SleepWidget options={o} /> },
+  mood: { title: "Mood", icon: Smile, options: trendOptions("line", "#f59e0b"), render: (o) => <MoodWidget options={o} /> },
   medications: { title: "Medications", icon: Pill, render: () => <MedicationsWidget /> },
   appointments: { title: "Upcoming appointments", icon: CalendarDays, render: () => <AppointmentsWidget /> },
   goals: {
