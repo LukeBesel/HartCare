@@ -335,6 +335,7 @@ export type UIScale = "compact" | "cozy" | "comfortable";
 export type RadiusStyle = "sharp" | "soft" | "round";
 export type FontChoice = "sans" | "rounded" | "mono" | "serif";
 export type SurfaceStyle = "clean" | "tinted";
+export type CardStyle = "soft" | "flat" | "outline" | "glass";
 
 export type DashboardWidgetId =
   | "rings"
@@ -371,10 +372,14 @@ export type WallpaperPresetId =
   | "ocean"
   | "forest"
   | "mono"
-  | "grid";
+  | "grid"
+  | "aurora-anim"
+  | "waves"
+  | "nebula"
+  | "drift";
 
 export interface Wallpaper {
-  mode: "none" | "preset" | "image" | "slideshow";
+  mode: "none" | "preset" | "image" | "slideshow" | "seasonal";
   preset?: WallpaperPresetId;
   /** Image sources (data URLs or storage URLs) for image / slideshow modes. */
   images: string[];
@@ -398,6 +403,7 @@ export interface Appearance {
   glow: boolean;
   reduceMotion: boolean;
   surface: SurfaceStyle;
+  cardStyle: CardStyle;
   wallpaper: Wallpaper;
 }
 
@@ -405,6 +411,20 @@ export interface ThemePreset {
   id: string;
   name: string;
   appearance: Appearance;
+}
+
+/** Time-of-day / auto-dark scheduling. Slots reference saved or curated presets. */
+export type DayPart = "morning" | "afternoon" | "evening" | "night";
+export interface ThemeSchedule {
+  /** Master switch for any scheduling. */
+  enabled: boolean;
+  /** Force dark mode between `darkFrom` and `darkTo` (hours, 0–23). */
+  autoDark: boolean;
+  darkFrom: number; // e.g. 19
+  darkTo: number; // e.g. 7
+  /** Apply a preset (by id) at each part of the day. Empty = no change. */
+  byTime: boolean;
+  slots: Partial<Record<DayPart, string>>; // dayPart -> preset id
 }
 
 export interface Settings {
@@ -424,10 +444,14 @@ export interface Settings {
   glow: boolean;
   reduceMotion: boolean;
   surface: SurfaceStyle;
+  cardStyle: CardStyle;
   wallpaper: Wallpaper;
 
   // Saveable / shareable theme presets
   presets: ThemePreset[];
+
+  // Scheduled / automatic theming
+  schedule: ThemeSchedule;
 
   // Per-profile theming: when on, each profile can have its own Appearance
   themePerProfile: boolean;
@@ -445,6 +469,15 @@ export const DEFAULT_WALLPAPER: Wallpaper = {
   blur: 0,
   dim: 30,
   fit: "cover",
+};
+
+export const DEFAULT_SCHEDULE: ThemeSchedule = {
+  enabled: false,
+  autoDark: true,
+  darkFrom: 19,
+  darkTo: 7,
+  byTime: false,
+  slots: {},
 };
 
 export const DEFAULT_DASHBOARD: WidgetConfig[] = [

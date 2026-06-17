@@ -146,7 +146,7 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: "hartcare-store-v1",
-      version: 3,
+      version: 4,
       // Backfill appearance/customization defaults for stores saved before v2.
       migrate: (persisted: unknown) => {
         const p = persisted as { db?: DB; currentProfileId?: string } | undefined;
